@@ -1,8 +1,8 @@
-const AttendaceModel = require("../models/AttendaceModel");
-const ProjectModel = require("../models/ProjectModel");
-const UserModel = require("../models/UserModel");
-const LeaveRequestModel = require("../models/LeaveRequestModel");
-const { sendLeaveRequestEmail } = require("../utils/emailService");
+const AttendaceModel = require("../models/AttendaceModel.js");
+const ProjectModel = require("../models/ProjectModel.js");
+const UserModel = require("../models/UserModel.js");
+const LeaveRequestModel = require("../models/LeaveRequestModel.js");
+const { sendLeaveRequestEmail } = require("../utils/emailService.js");
 
 
 // Helper to get start of today

@@ -1,5 +1,5 @@
 const express = require("express");
-const { verifyUser, adminOnly } = require("../Middleware/authMiddleware");
+const { verifyUser, adminOnly } = require("../Middleware/authMiddleware.js");
 const {
     addEmployee,
     getAllEmployees,
@@ -20,7 +20,7 @@ const {
     resetPaidLeaves,
     calculateMonthlySalary,
     getMonthlySalaries,
-} = require("../Controllers/adminController");
+} = require("../controllers/adminController");
 
 const router = express.Router();
 

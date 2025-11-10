@@ -1,12 +1,12 @@
 const express = require("express");
-const { verifyUser } = require("../Middleware/authMiddleware");
+const { verifyUser } = require("../Middleware/authMiddleware.js");
 const {
   login,
   verify,
   changePassword,
   forgotPassword,
   resetPassword,
-} = require("../controllers/authController");
+} = require("../controllers/authController.js");
 
 const router = express.Router();
 

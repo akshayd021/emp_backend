@@ -1,10 +1,10 @@
 
 const mongoose = require('mongoose');
-const UserModel = require('../models/UserModel');
-const AttendaceModel = require('../models/AttendaceModel');
-const ProjectModel = require('../models/ProjectModel');
-const LeaveRequestModel = require('../models/LeaveRequestModel');
-const { sendEmployeeUpdateEmail, sendLeaveResponseEmail } = require('../utils/emailService');
+const UserModel = require('../models/UserModel.js');
+const AttendaceModel = require('../models/AttendaceModel.js');
+const ProjectModel = require('../models/ProjectModel.js');
+const LeaveRequestModel = require('../models/LeaveRequestModel.js');
+const { sendEmployeeUpdateEmail, sendLeaveResponseEmail } = require('../utils/emailService.js');
 
 // @desc    Add a new employee (Admin only)
 // @route   POST /api/admin/employees
@@ -20,7 +20,7 @@ const addEmployee = async (req, res) => {
         if (userExists) {
             return res.status(400).json({ success: false, message: "User with this email already exists." });
         }
-        
+
         // Note: Password hashing is handled by the pre-save hook in the User model.
         const user = await UserModel.create({
             name, email, password, employeeID, role: role || 'Employee', designation, salary, dob, gender, profileImage,
@@ -31,11 +31,11 @@ const addEmployee = async (req, res) => {
         if (user) {
             // Send welcome email to employee
             await sendEmployeeUpdateEmail(user, true);
-            
-            res.status(201).json({ 
-                success: true, 
-                message: "Employee added successfully.", 
-                user: { _id: user._id, name: user.name, email: user.email } 
+
+            res.status(201).json({
+                success: true,
+                message: "Employee added successfully.",
+                user: { _id: user._id, name: user.name, email: user.email }
             });
         } else {
             res.status(400).json({ success: false, message: "Invalid user data received." });
@@ -66,17 +66,17 @@ const getAttendanceSummary = async (req, res) => {
         today.setHours(0, 0, 0, 0);
 
         const allEmployeesCount = await UserModel.countDocuments({ role: 'Employee' });
-        
+
         // Get all existing employee IDs to filter out orphaned attendance records
         const existingEmployeeIds = await UserModel.find({ role: 'Employee' }).select('_id').lean();
         const employeeIds = existingEmployeeIds.map(emp => emp._id);
-        
+
         const attendanceRecords = await AttendaceModel.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     date: today,
                     employee: { $in: employeeIds } // Only count records for existing employees
-                } 
+                }
             },
             { $group: { _id: '$status', count: { $sum: 1 } } }
         ]);
@@ -88,7 +88,7 @@ const getAttendanceSummary = async (req, res) => {
 
         // Total employees with attendance records today
         const totalWithRecords = present + onLeave + halfDay + markedAbsent;
-        
+
         // Absent/Pending = Total employees - employees with records (includes both marked absent and no record)
         const absentPending = Math.max(0, allEmployeesCount - totalWithRecords);
 
@@ -117,12 +117,12 @@ const getEmployeesOnLeave = async (req, res) => {
         const existingEmployeeIds = await UserModel.find({ role: 'Employee' }).select('_id').lean();
         const employeeIds = existingEmployeeIds.map(emp => emp._id);
 
-        const employeesOnLeave = await AttendaceModel.find({ 
-            date: today, 
+        const employeesOnLeave = await AttendaceModel.find({
+            date: today,
             status: 'Leave',
             employee: { $in: employeeIds } // Only get records for existing employees
         })
-        .populate('employee', 'name employeeID designation');
+            .populate('employee', 'name employeeID designation');
 
         res.status(200).json({ success: true, employeesOnLeave: employeesOnLeave.map(att => att.employee) });
     } catch (error) {
@@ -142,16 +142,16 @@ const getPresentEmployees = async (req, res) => {
         const existingEmployeeIds = await UserModel.find({ role: 'Employee' }).select('_id').lean();
         const employeeIds = existingEmployeeIds.map(emp => emp._id);
 
-        const presentEmployees = await AttendaceModel.find({ 
-            date: today, 
+        const presentEmployees = await AttendaceModel.find({
+            date: today,
             status: 'Present',
             employee: { $in: employeeIds } // Only get records for existing employees
         })
-        .populate('employee', 'name employeeID designation email')
-        .select('employee punchIn lunchStart lunchEnd punchOut');
+            .populate('employee', 'name employeeID designation email')
+            .select('employee punchIn lunchStart lunchEnd punchOut');
 
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             presentEmployees: presentEmployees
                 .filter(att => att.employee !== null && att.employee !== undefined)
                 .map(att => ({
@@ -229,7 +229,7 @@ const getAttendanceAnalytics = async (req, res) => {
             status: 'Present',
             employee: { $in: employeeIds }
         });
-        const attendanceRate = totalPossibleAttendance > 0 
+        const attendanceRate = totalPossibleAttendance > 0
             ? ((totalPresent / totalPossibleAttendance) * 100).toFixed(2)
             : 0;
 
@@ -251,7 +251,7 @@ const getAttendanceAnalytics = async (req, res) => {
 const getAttendanceReport = async (req, res) => {
     try {
         const { startDate, endDate, employeeId } = req.query;
-        
+
         if (!startDate || !endDate) {
             return res.status(400).json({ success: false, message: "Start date and end date are required." });
         }
@@ -289,8 +289,8 @@ const getAttendanceReport = async (req, res) => {
             .sort({ date: -1 })
             .limit(100);
 
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             summary: report,
             detailedReport: detailedReport.filter(att => att.employee !== null)
         });
@@ -305,7 +305,7 @@ const getAttendanceReport = async (req, res) => {
 const exportAttendanceReport = async (req, res) => {
     try {
         const { startDate, endDate, employeeId } = req.query;
-        
+
         if (!startDate || !endDate) {
             return res.status(400).json({ success: false, message: "Start date and end date are required." });
         }
@@ -341,10 +341,10 @@ const exportAttendanceReport = async (req, res) => {
                 const lunchStart = att.lunchStart ? new Date(att.lunchStart).toLocaleTimeString() : '';
                 const lunchEnd = att.lunchEnd ? new Date(att.lunchEnd).toLocaleTimeString() : '';
                 const punchOut = att.punchOut ? new Date(att.punchOut).toLocaleTimeString() : '';
-                const workHours = att.totalWorkDurationMinutes 
+                const workHours = att.totalWorkDurationMinutes
                     ? `${Math.floor(att.totalWorkDurationMinutes / 60)}h ${att.totalWorkDurationMinutes % 60}m`
                     : '';
-                
+
                 return `"${date}","${att.employee.name}","${att.employee.employeeID}","${att.employee.designation}","${att.employee.email}","${att.status}","${punchIn}","${lunchStart}","${lunchEnd}","${punchOut}","${workHours}"`;
             })
             .join('\n');
@@ -383,7 +383,7 @@ const getEmployeeStats = async (req, res) => {
             leave: attendanceRecords.filter(r => r.status === 'Leave').length,
             halfDay: attendanceRecords.filter(r => r.status === 'Half Day').length,
             totalWorkHours: Math.round(attendanceRecords.reduce((sum, r) => sum + (r.totalWorkDurationMinutes || 0), 0) / 60),
-            averageWorkHours: attendanceRecords.length > 0 
+            averageWorkHours: attendanceRecords.length > 0
                 ? Math.round((attendanceRecords.reduce((sum, r) => sum + (r.totalWorkDurationMinutes || 0), 0) / 60) / attendanceRecords.length * 10) / 10
                 : 0
         };
@@ -422,7 +422,7 @@ const respondToLeaveRequest = async (req, res) => {
 
     try {
         const leaveRequest = await LeaveRequestModel.findById(requestId).populate('employee');
-        
+
         if (!leaveRequest) {
             return res.status(404).json({ success: false, message: "Leave request not found." });
         }
@@ -443,22 +443,22 @@ const respondToLeaveRequest = async (req, res) => {
             const startDate = new Date(leaveRequest.startDate);
             const endDate = new Date(leaveRequest.endDate);
             const leaveDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-            
+
             // Deduct paid leave if it's a paid leave request
             if (leaveRequest.isPaidLeave) {
                 const employee = await UserModel.findById(leaveRequest.employee._id);
                 employee.paidLeavesAvailable = Math.max(0, employee.paidLeavesAvailable - leaveDays);
                 await employee.save();
             }
-            
+
             // Mark all dates in the range as Leave
             for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
                 const dayStart = new Date(date);
                 dayStart.setHours(0, 0, 0, 0);
-                
+
                 await AttendaceModel.findOneAndUpdate(
                     { employee: leaveRequest.employee._id, date: dayStart },
-                    { 
+                    {
                         status: 'Leave',
                         leaveType: leaveRequest.leaveType
                     },
@@ -470,10 +470,10 @@ const respondToLeaveRequest = async (req, res) => {
         // Send email to employee
         await sendLeaveResponseEmail(leaveRequest, leaveRequest.employee);
 
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             message: `Leave request ${action === 'approve' ? 'approved' : 'rejected'} successfully.`,
-            leaveRequest 
+            leaveRequest
         });
     } catch (error) {
         console.error("Respond to Leave Request Error:", error.message);
@@ -512,7 +512,7 @@ const getAllProjects = async (req, res) => {
     try {
         const projects = await ProjectModel.find({})
             .populate('employees', 'name employeeID designation email'); // Show which employee is working on it
-        
+
         res.status(200).json({ success: true, projects });
     } catch (error) {
         console.error("Get Projects Error:", error.message);
@@ -572,10 +572,10 @@ const updateEmployee = async (req, res) => {
         await user.save();
 
         const updatedUser = await UserModel.findById(userId).select('-password -resetToken -resetTokenExpiry');
-        
+
         // Send email to employee about profile update
         await sendEmployeeUpdateEmail(updatedUser, false);
-        
+
         res.status(200).json({ success: true, message: "Employee updated successfully.", employee: updatedUser });
     } catch (error) {
         console.error("Update Employee Error:", error.message);
@@ -604,7 +604,7 @@ const deleteEmployee = async (req, res) => {
         // Delete related data: attendance records, leave requests, and remove from projects
         await AttendaceModel.deleteMany({ employee: userId });
         await LeaveRequestModel.deleteMany({ employee: userId });
-        
+
         // Remove employee from all projects
         await ProjectModel.updateMany(
             { employees: userId },
@@ -625,7 +625,7 @@ const resetPaidLeaves = async (req, res) => {
     try {
         const employees = await UserModel.find({ role: 'Employee' });
         const now = new Date();
-        
+
         for (const employee of employees) {
             // Add 1 paid leave and carryover existing ones
             employee.paidLeavesAvailable = (employee.paidLeavesAvailable || 0) + 1;
@@ -633,9 +633,9 @@ const resetPaidLeaves = async (req, res) => {
             await employee.save();
         }
 
-        res.status(200).json({ 
-            success: true, 
-            message: `Paid leaves reset successfully. ${employees.length} employees received 1 paid leave.` 
+        res.status(200).json({
+            success: true,
+            message: `Paid leaves reset successfully. ${employees.length} employees received 1 paid leave.`
         });
     } catch (error) {
         console.error("Reset Paid Leaves Error:", error.message);
@@ -657,7 +657,7 @@ const calculateMonthlySalary = async (req, res) => {
 
         const targetMonth = month ? parseInt(month) - 1 : new Date().getMonth();
         const targetYear = year ? parseInt(year) : new Date().getFullYear();
-        
+
         const startDate = new Date(targetYear, targetMonth, 1);
         const endDate = new Date(targetYear, targetMonth + 1, 0);
         endDate.setHours(23, 59, 59, 999);
@@ -707,10 +707,10 @@ const calculateMonthlySalary = async (req, res) => {
 
         // Calculate salary
         let calculatedSalary = employee.salary;
-        
+
         // Deduct for unpaid leaves (full day deduction)
         calculatedSalary -= unpaidLeaves * dailySalary;
-        
+
         // Deduct for half days (half day deduction)
         calculatedSalary -= halfDays * (dailySalary / 2);
 
@@ -718,10 +718,10 @@ const calculateMonthlySalary = async (req, res) => {
         const totalWorkHours = attendanceRecords.reduce((sum, r) => {
             return sum + (r.totalWorkDurationMinutes || 0) / 60;
         }, 0);
-        
+
         const expectedWorkHours = (presentDays * WORKING_HOURS_PER_DAY) + (halfDays * WORKING_HOURS_PER_DAY / 2);
         const workHoursDifference = expectedWorkHours - totalWorkHours;
-        
+
         // If worked less than expected, deduct proportionally
         if (workHoursDifference > 0) {
             calculatedSalary -= workHoursDifference * hourlySalary;
@@ -759,7 +759,7 @@ const getMonthlySalaries = async (req, res) => {
         const { month, year } = req.query;
         const targetMonth = month ? parseInt(month) - 1 : new Date().getMonth();
         const targetYear = year ? parseInt(year) : new Date().getFullYear();
-        
+
         const startDate = new Date(targetYear, targetMonth, 1);
         const endDate = new Date(targetYear, targetMonth + 1, 0);
         endDate.setHours(23, 59, 59, 999);
@@ -815,10 +815,10 @@ const getMonthlySalaries = async (req, res) => {
             const totalWorkHours = attendanceRecords.reduce((sum, r) => {
                 return sum + (r.totalWorkDurationMinutes || 0) / 60;
             }, 0);
-            
+
             const expectedWorkHours = (presentDays * WORKING_HOURS_PER_DAY) + (halfDays * WORKING_HOURS_PER_DAY / 2);
             const workHoursDifference = expectedWorkHours - totalWorkHours;
-            
+
             if (workHoursDifference > 0) {
                 calculatedSalary -= workHoursDifference * hourlySalary;
             }

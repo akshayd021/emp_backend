@@ -2,7 +2,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const UserModel = require('../models/UserModel');
+const UserModel = require('../models/UserModel.js');
 
 const JWT_SECRET = 'YOUR_JWT_SECRET';
 const SMTP_USER = 'utsavvasoya99@gmail.com';

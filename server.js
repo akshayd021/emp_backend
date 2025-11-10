@@ -2,9 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-const authRoutes = require('./router/authRouter');
-const adminRoutes = require('./router/adminRouter');
-const employeeRoutes = require('./router/empRouter');
+const authRoutes = require('./router/authRouter.js');
+const adminRoutes = require('./router/adminRouter.js');
+const employeeRoutes = require('./router/empRouter.js');
 
 const app = express();
 const PORT = process.env.PORT || 4000;

@@ -1,5 +1,5 @@
 const express = require("express");
-const { verifyUser, employeeOnly } = require("../Middleware/authMiddleware");
+const { verifyUser, employeeOnly } = require("../Middleware/authMiddleware.js");
 const {
     getEmployeeProfile,
     punchIn,
@@ -14,7 +14,7 @@ const {
     getMyLeaveRequests,
     getMyPaidLeaves,
     getMySalary,
-} = require("../controllers/empController");
+} = require("../controllers/empController.js");
 
 const router = express.Router();
 
